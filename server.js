@@ -10,51 +10,50 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-app.put('/products/:codigo_producto', async (req, res) => {
-  const { codigo_producto } = req.params; 
-  const { nombre, descripcion, categoria, material, color, precio } = req.body;
+app.put('/products/:product_code', async (req, res) => {
+  const { product_code } = req.params; 
+  const { name, description, category, material, color, price } = req.body;
 
-  if (!nombre && !descripcion && !categoria && !material && !color && !precio ) {
-    return res.status(400).json(ApiResponse('error', null, 'Debe proporcionar al menos un campo para actualizar.'));
+  if (!name && !description && !category && !material && !color && !price) {
+    return res.status(400).json(ApiResponse('error', null, 'You must provide at least one field to update.'));
   }
 
   try {
     const query = `
-      UPDATE productos
+      UPDATE products
       SET 
-        nombre = COALESCE($2, nombre),
-        descripcion = COALESCE($3, descripcion),
-        categoria = COALESCE($4, categoria),
+        name = COALESCE($2, name),
+        description = COALESCE($3, description),
+        category = COALESCE($4, category),
         material = COALESCE($5, material),
         color = COALESCE($6, color),
-        precio = COALESCE($7, precio),
-        fecha_actualizacion = CURRENT_TIMESTAMP
-      WHERE codigo_producto = $1
+        price = COALESCE($7, price),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE product_code = $1
       RETURNING *;
     `;
     
     const params = [
-      codigo_producto, 
-      nombre, 
-      descripcion, 
-      categoria, 
+      product_code, 
+      name, 
+      description, 
+      category, 
       material, 
       color, 
-      precio, 
+      price, 
     ];
 
     const result = await pool.query(query, params);
 
     if (result.rowCount === 0) {
-      return res.status(404).json(ApiResponse('error', null, 'Producto no encontrado.'));
+      return res.status(404).json(ApiResponse('error', null, 'Product not found.'));
     }
-    res.json(ApiResponse('success', result.rows[0], 'Producto actualizado exitosamente.'));
+    res.json(ApiResponse('success', result.rows[0], 'Product updated successfully.'));
   } catch (err) {
     console.log(err);
-    res.status(500).json(ApiResponse('error', null, 'Error al actualizar el producto.'));
+    res.status(500).json(ApiResponse('error', null, 'Error updating the product.'));
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
